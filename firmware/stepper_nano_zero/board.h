@@ -1,4 +1,5 @@
 /**********************************************************************
+/**********************************************************************
 	Copyright (C) 2018  MisfitTech LLC,  All rights reserved.
 
  	MisfitTech uses a dual license model that allows the software to be used under
@@ -56,6 +57,10 @@
 // comment out this next line if using the older hardware
 #define NEMA17_SMART_STEPPER_3_21_2017
 
+#if defined(MECHADUINO_HARDWARE) && defined(NEMA17_SMART_STEPPER_3_21_2017)
+#error "Cannot have both MECHADUINO_HARDWARE and NEMA17_SMART_STEPPER_3_21_2017 defined in board.h"
+#endif
+
 //The MKS Servo42 uses the A1333_Encoder
 // Please uncomment this line and make sure the NEMA17_SMART_STEPPER_3_21_2017 is
 // uncommented for the Servo42
@@ -82,7 +87,7 @@
 //#define ENABLE_PHASE_PREDICTION //this enables prediction of phase at high velocity to increase motor speed
 //as of FW0.11 it is considered development only
 
-#define VERSION "FW: 0.39" //this is what prints on LCD during splash screen
+#define VERSION "FW: 0.40" //this is what prints on LCD during splash screen
 
 //Define this to allow command out serial port, else hardware serial is debug log
 //#define CMD_SERIAL_PORT
@@ -91,8 +96,11 @@
 
 //This section is for using the step and dir pins as serial port
 // when the enable pin is inactive.
+#ifndef MECHADUINO_HARDWARE
 #define USE_STEP_DIR_SERIAL
 #define STEP_DIR_BAUD (19200) //this is the baud rate we will use
+#endif
+
 
 // These are used as an attempt to use TC4 to count steps
 //  currently this is not working.
@@ -188,6 +196,7 @@
  *  0.38 - fixed bug in the velocity feedback mode.
  *  0.39 - changed step count to TCC2, improved the dir pin setup/hold times
  *  	 - added support for the MKS Servo42 (A1333 encoder)
+ *  0.40 - fixed compiling errors for Mechaduino. Added sanity checks for different hardware boards (AK)
  */
 
 
@@ -238,6 +247,7 @@ typedef enum {
 #ifdef MECHADUINO_HARDWARE
 #warning "Compiling source for Mechaduino NOT NZS"
 #define DISABLE_LCD
+#undef  Serial5
 #define Serial5 Serial 
 #else
 #define SerialUSB Serial
@@ -355,7 +365,7 @@ typedef enum {
 
 
 //Here are some useful macros
-#define DIVIDE_WITH_ROUND(x,y)  ((x+y/2)/y)
+#define DIVIDE_WITH_ROUND(x,y)  (((x)+(y)/2)/(y))
 
 
 #define GPIO_LOW(pin) {PORT->Group[g_APinDescription[(pin)].ulPort].OUTCLR.reg = (1ul << g_APinDescription[(pin)].ulPin);}
@@ -551,4 +561,3 @@ static inline void DelayMs(uint32_t ms)
 }
 
 #endif//__BOARD_H__
-

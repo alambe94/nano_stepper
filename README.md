@@ -1,18 +1,21 @@
 # Smart Stepper (also known as the nano zero stepper)
 Firmware to turn a stepper motor into servo motor: see http://misfittech.net for hardware! 
 
-If you have a MKS Servo42, this firmware will not currently work on your hardware. MKS has taken this firmware but has not provided source back and hardware designs back to the community. If you want MisfitTech to enable this firmware to work with the servo42 let us know by using the donate button adding a note to support the servo42, or contact us directly from our website.  
+If you have a MKS Servo42, this firmware is not fully tested. MKS has taken this firmware but has not provided source back and hardware designs back to the community. Test submissions are appreciated. __Test at you own RISK!__
 
 If you want to support the work on the firmware and hardware consider buying hardware from www.misfittech.net or buying me a beer using the donation button. 
 
 [![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4JAEK4G24W2U4)
 
 # How to Install 
-[Hardware install](http://misfittech.net/2016/11/29/installing-the-nano-zero-stepper/)
+[Hardware install and manual](https://github.com/Misfittech/nano_stepper/raw/master/documentation/Smart%20Stepper%20Manual.pdf)
 
-[Arduino install] (http://misfittech.net/2016/07/27/arduino_install/) for building firmware
+[Arduino install](http://misfittech.net/blog/arduino-package-install/) for building firmware
 
-[Further Details and to purchase Hardware] (http://misfittech.net/product/nano-zero-stepper/)
+[Further Details and to purchase Hardware](http://misfittech.net/smart-steppers/)
+
+# Google groups forum
+[Google groups forum](https://groups.google.com/forum/#!forum/smart-stepper)
 
 
 # Command List
@@ -32,6 +35,9 @@ This will run a 200 point calibration of the encoder.
 ### testcal 
 This will test the calibration and report the maximum error in degrees. 
 
+### microsteps 
+This command gets/sets the number of microsteps the smart stepper will use for the step command and the step pin.  The number of microsteps does not affect the resolution of the controller but rather how fine you can set the position. 
+
 ### step
 This will move the motor one step clockwise, the step size is based on the current microstep setting.  To move the motor counterclockwise use “step 1”. To move the motor clockwise 16 steps used “step 0 16” to move motor counterclockwise 16 steps use “step 1 16”
 
@@ -44,9 +50,6 @@ Reads the current motor position and reports it as degrees.
 
 ### encoderdiag
 This command will read and report the AS5047D internal registers for diagnostic purposes. 
-
-### microsteps 
-This command gets/sets the number of microsteps the smart stepper will use for the step command and the step pin.  The number of microsteps does not affect the resolution of the controller but rather how fine you can set the position. 
 
 ### spid
 This command sets the Kp, Ki, and Kd terms for the simple positional PID controller. 
@@ -74,16 +77,18 @@ This command sets which direction the motor will rotate when direction pin is pu
 ### errorlimit
 Gets set the maximum number of degrees of error that is acceptable, any posistioning error about the error limit will assert the error pin, when error pin is set as error output. 
 For example:
+~~~~
 :>errorlimit 1.8 
+~~~~
 Will set the error limit to 1.8 degrees. 
 
 ### ctrlmode
 Gets/Sets the feedback controller mode of operation. The command takes an integer from 0 through 4 to set the control mode per table below:
-Controller off - 	0  -- this is not currently used
-Open-Loop - 	1  -- this is open loop with no feedback
-Simple PID -   2  -- simple positional PID, which is factory default 
-Positional PID - 3 -- current based PID mode, requires tuning for your machine
-Velocity PID - 4 -- velocity based PID, requires tuning for your machine and speed range
+* Controller off - 	0  -- this is not currently used
+* Open-Loop - 	1  -- this is open loop with no feedback
+* Simple PID -   2  -- simple positional PID, which is factory default 
+* Positional PID - 3 -- current based PID mode, requires tuning for your machine
+* Velocity PID - 4 -- velocity based PID, requires tuning for your machine and speed range
 
 If you are unsure what you are doing leave unit in the Simple PID mode of operation. 
 
@@ -111,6 +116,85 @@ If user issues a move command that takes a long time and wants to stop the move 
 
 ### setzero
 This command will take the current motor position and set it to absolute angle of  zero. Note that if you are in the middle move it will take the position at the time of the command and use it, thus it is recommend a move be stopped or wait for completion before issuing the setzero. 
+
+### data
+This command will toggle output of binary data.
+
+### looptime
+This command will display the time it takes for a single processing loop to execute.
+
+### eepromerror
+This command displays the motor error in degrees difference from the stored eeprom value at motor power up.
+
+### eepromloc
+Displays the location of the shaft angle in degrees at motor power on.
+
+### eepromwrite
+Forces the eeprom to store all current values in ram to eeprom.
+
+### eepromsetloc
+Forces the eeprom to write the current shaft angle overwriting the stored location from powerup.
+
+### setpos
+Overwrites the current shaft angle in the motion planner.
+
+### reboot
+Forces the smart stepper to reboot
+
+### homecurrent
+If using built in homing routine (command "home") this will specify the amount of current applied when motor is moving during homing operation when homepin is logic active.__EXPERIMENTAL USE WITH CAUTION__
+
+### homepin
+Allows setting of pin for current limited enable for homing. This triggers a current drop during homing movements. Current set using command "homecurrent". This pin is pulled low to activate. __EXPERIMENTAL USE WITH CAUTION__
+
+### homeangledelay
+Currently unused.
+
+### home
+Tells the motion controller to move motor until the home switch (enable pin) is pulled low. (Only on boards 3/21/2017 or newer) (Must be enabled in firmware).
+For example:
+~~~~
+:>home 360 0.5
+~~~~
+Will move up to 360 degrees at 0.5 RPM. __EXPERIMENTAL USE WITH CAUTION__
+
+### pinread
+Displays the binary states of all pins (Step, Dir, Enable, Error, A3, TX, RX)
+
+### errorpinmode
+Sets or displays the error pin mode. Allows someone to swap usage of the error pin as an enable pin on older boards. (Not compiled for use on boards 3/21/2017 or newer since they have separate enable and error pins) (Must be enabled in firmware)
+Modes are: 
+* "0" - Enable mode, active high (digital input).
+* "1" - Enable mode, active low (digital input).
+* "2" - Error mode, active low (digital output). Active level is reached when there is an angle error.
+* "3" - Error mode, bi-directional, (digital input/output open collector). (Not currently used).
+
+### errorpin
+Sets or displays the binary state of the enable pin. Acceptable values are 0 or 1
+For example:
+~~~~
+:>errorpin 1
+~~~~
+Will set the error pin on the terminal block to output a logic high when the error level is reached
+
+### enablepinmode
+Sets or displays the enable pin mode. Allows someone to swap usage of the enable pin as an error pin on older boards. (Only on boards 3/21/2017 or newer since they have separate enable and error pins) (Must be enabled in firmware)
+Modes are: 
+* "0" - Enable mode, active high (digital input).
+* "1" - Enable mode, active low (digital input).
+* "2" - Error mode, active low (digital output). Active level is reached when there is an angle error.
+* "3" - Error mode, bi-directional, (digital input/output open collector). (Not currently used).
+
+### geterror
+Displays the current motor shaft error in degrees.
+
+### getsteps
+Displays the number of steps that have been seen from the DIR pin.
+
+### debug
+Sets if syslog debugging will be output on USB serial. Allowed values are 0 for disable, 1 for enable.
+
+
 
 ## License:
 The smart stepper related hardware is released under the Creative Commons Attribution Share-Alike 4.0 License as much of the work is based on Mechaduino project by J. Church.
